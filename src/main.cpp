@@ -8,6 +8,13 @@
 #include "shader_s.h"
 
 #include <iostream>
+#include <cmath>
+#include <vector>
+
+const std::vector<float> color1 = {1.0f,0.0f,0.0f}; //red
+const std::vector<float> color2 = {0.0f,1.0f,0.0f}; //green
+const std::vector<float> color3 = {0.0f,0.0f,1.0f}; //blue
+const std::vector<float> color4 = {1.0f,1.0f,0.0f}; //yellow
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -15,6 +22,11 @@ void processInput(GLFWwindow *window);
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+
+void drawKT(std::vector<float> c1, std::vector<float> c2, std::vector<float> c3, int depth, 
+            std::vector<float>& vertices) {
+
+            };
 
 int main()
 {
@@ -55,6 +67,36 @@ int main()
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
+
+    // Tetrahedron vertices
+
+    // Face 1
+    std::vector<float> f1vertex1 = {};
+
+    std::vector<float> f1vertex2 = {};
+
+    std::vector<float> f1vertex3 = {};
+
+    // Face 2
+    std::vector<float> f2vertex1 = {};
+
+    std::vector<float> f2vertex2 = {};
+
+    std::vector<float> f2vertex3 = {};
+
+    // Face 3
+    std::vector<float> f3vertex1 = {};
+
+    std::vector<float> f3vertex2 = {};
+
+    std::vector<float> f3vertex3 = {};
+
+    // Face 4
+    std::vector<float> f4vertex1 = {};
+
+    std::vector<float> f4vertex2 = {};
+
+    std::vector<float> f4vertex3 = {};
 
     float vertices[] = {};
 
