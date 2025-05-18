@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 
 #include "shader_s.h"
 
@@ -16,7 +17,7 @@ const std::vector<float> color2 = {0.0f, 1.0f, 0.0f}; // green
 const std::vector<float> color3 = {0.0f, 0.0f, 1.0f}; // blue
 const std::vector<float> color4 = {1.0f, 1.0f, 0.0f}; // yellow
 
-const unsigned int maxDepth = 6;
+const unsigned int maxDepth = 5;
 
 // Face 1
 const std::vector<float> f1vertex1 = {.5f, .5f, .5f};
@@ -37,6 +38,19 @@ const std::vector<float> f3vertex3 = {-.5f, -.5f, .5f};
 const std::vector<float> f4vertex1 = {-.5f, -.5f, .5f};
 const std::vector<float> f4vertex2 = {-.5f, .5f, -.5f};
 const std::vector<float> f4vertex3 = {.5f, -.5f, -.5f};
+
+// Rotates 'point' around 'axis' passing through 'center' by 'angle' radians
+std::vector<float> rotateAroundAxis(
+    const std::vector<float>& point,
+    const std::vector<float>& center,
+    const std::vector<float>& axis,
+    float angle)
+{
+    glm::vec3 p(point[0] - center[0], point[1] - center[1], point[2] - center[2]);
+    glm::vec3 ax(axis[0], axis[1], axis[2]);
+    glm::vec3 rotated = glm::rotate(p, angle, glm::normalize(ax));
+    return {rotated.x + center[0], rotated.y + center[1], rotated.z + center[2]};
+}
 
 std::vector<float> crossProduct(const std::vector<float> &a, const std::vector<float> &b)
 {
@@ -138,26 +152,24 @@ void drawTriangle(std::vector<float> a, std::vector<float> b, std::vector<float>
     vertices.insert(vertices.end(), color.begin(), color.end());
 }
 
-void drawKT(std::vector<float> a, std::vector<float> b, std::vector<float> c, int depth,
+void drawST(std::vector<float> a, std::vector<float> b, std::vector<float> c, int depth,
             std::vector<float> &vertices)
 {
     if (depth < maxDepth)
     {
-        std::vector<float> mid1 = midpoint(c, a);
-        std::vector<float> mid2 = midpoint(a, b);
-        std::vector<float> mid3 = midpoint(b, c);
+        std::vector<float> mid1 = midpoint(a, b);
+        std::vector<float> mid2 = midpoint(b, c);
+        std::vector<float> mid3 = midpoint(c, a);
 
-        std::vector<float> newA1 = mid1;
-        std::vector<float> newB1 = mid2;
+        drawST(a, mid1, mid3, depth + 1, vertices);
+        drawST(mid1, b, mid2, depth + 1, vertices);
+        drawST(mid3, mid2, c, depth + 1, vertices);
 
-        std::vector<float> newA2 = mid2;
-        std::vector<float> newB2 = mid3;
-
-        std::vector<float> newA3 = mid3;
-        std::vector<float> newB3 = mid1;
-
-        std::vector<float> origNormal = normal(a, b, c);
-        std::vector<float> baseNormal = normal(mid1, mid2, mid3);
+        std::vector<float> center = {
+            (mid1[0] + mid2[0] + mid3[0]) / 3.0f,
+            (mid1[1] + mid2[1] + mid3[1]) / 3.0f,
+            (mid1[2] + mid2[2] + mid3[2]) / 3.0f};
+        std::vector<float> n = normal(mid1, mid2, mid3);
 
         float edgeLength = std::sqrt(
             (mid1[0] - mid2[0]) * (mid1[0] - mid2[0]) +
@@ -165,45 +177,60 @@ void drawKT(std::vector<float> a, std::vector<float> b, std::vector<float> c, in
             (mid1[2] - mid2[2]) * (mid1[2] - mid2[2]));
         float height = std::sqrt(2.0f / 3.0f) * edgeLength;
 
-        std::vector<float> centroid = {
-            (mid1[0] + mid2[0] + mid3[0]) / 3.0f,
-            (mid1[1] + mid2[1] + mid3[1]) / 3.0f,
-            (mid1[2] + mid2[2] + mid3[2]) / 3.0f};
+        std::vector<float> inner1 = {mid1[0] - n[0] * height, mid1[1] - n[1] * height, mid1[2] - n[2] * height};
+        std::vector<float> inner2 = {mid2[0] - n[0] * height, mid2[1] - n[1] * height, mid2[2] - n[2] * height};
+        std::vector<float> inner3 = {mid3[0] - n[0] * height, mid3[1] - n[1] * height, mid3[2] - n[2] * height};
 
-        // Generate both possible apexes
-        std::vector<float> newC1 = {
-            centroid[0] + baseNormal[0] * height,
-            centroid[1] + baseNormal[1] * height,
-            centroid[2] + baseNormal[2] * height};
-        std::vector<float> newC2 = {
-            centroid[0] - baseNormal[0] * height,
-            centroid[1] - baseNormal[1] * height,
-            centroid[2] - baseNormal[2] * height};
-        
+        float angle = glm::radians(60.0f);
+        std::vector<float> rotated1 = rotateAroundAxis(inner1, center, n, angle);
+        std::vector<float> rotated2 = rotateAroundAxis(inner2, center, n, angle);
+        std::vector<float> rotated3 = rotateAroundAxis(inner3, center, n, angle);
 
-        drawKT(mid1, mid2, newC1, 20, vertices);
-        drawKT(mid2, mid3, newC1, 20, vertices);
-        drawKT(mid3, mid1, newC1, 20, vertices);
-
-        if (depth < (maxDepth - 1))
-        {
-            drawKT(mid2, mid1, a, depth + 1, vertices);
-            drawKT(mid3, mid2, b, depth + 1, vertices);
-            drawKT(mid1, mid3, c, depth + 1, vertices);
-        }
-        else
-        {
-            drawTriangle(mid1, mid2, a, vertices);
-            drawTriangle(mid2, mid3, b, vertices);
-            drawTriangle(mid3, mid1, c, vertices);
-        }
-        drawTriangle(mid1, mid2, mid3, vertices);
+        drawST(rotated1, rotated2, rotated3, depth + 1, vertices);
     }
     else
     {
         drawTriangle(a, b, c, vertices);
     }
-};
+}
+
+void drawInverseST(std::vector<float> a, std::vector<float> b, std::vector<float> c, int depth,
+            std::vector<float> &vertices)
+{
+    std::vector<float> mid1 = midpoint(a, b);
+    std::vector<float> mid2 = midpoint(b, c);
+    std::vector<float> mid3 = midpoint(c, a);
+    std::vector<float> center = {
+        (mid1[0] + mid2[0] + mid3[0]) / 3.0f,
+        (mid1[1] + mid2[1] + mid3[1]) / 3.0f,
+        (mid1[2] + mid2[2] + mid3[2]) / 3.0f};
+    std::vector<float> n = normal(mid1, mid2, mid3);
+
+    float edgeLength = std::sqrt(
+        (mid1[0] - mid2[0]) * (mid1[0] - mid2[0]) +
+        (mid1[1] - mid2[1]) * (mid1[1] - mid2[1]) +
+        (mid1[2] - mid2[2]) * (mid1[2] - mid2[2]));
+    float height = std::sqrt(2.0f / 3.0f) * edgeLength;
+
+    std::vector<float> inner1 = {mid1[0] - n[0] * height, mid1[1] - n[1] * height, mid1[2] - n[2] * height};
+    std::vector<float> inner2 = {mid2[0] - n[0] * height, mid2[1] - n[1] * height, mid2[2] - n[2] * height};
+    std::vector<float> inner3 = {mid3[0] - n[0] * height, mid3[1] - n[1] * height, mid3[2] - n[2] * height};
+
+    float angle = glm::radians(60.0f);
+    std::vector<float> rotated1 = rotateAroundAxis(inner1, center, n, angle);
+    std::vector<float> rotated2 = rotateAroundAxis(inner2, center, n, angle);
+    std::vector<float> rotated3 = rotateAroundAxis(inner3, center, n, angle);
+
+    drawTriangle(mid1, mid2, mid3, vertices);
+    drawTriangle(rotated1, rotated2, rotated3, vertices);
+    if (depth < maxDepth)
+    {
+        drawInverseST(a, mid1, mid3, depth + 1, vertices);
+        drawInverseST(mid1, b, mid2, depth + 1, vertices);
+        drawInverseST(mid3, mid2, c, depth + 1, vertices);
+        drawInverseST(rotated1, rotated2, rotated3, depth + 1, vertices);
+    }
+}
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -253,13 +280,19 @@ int main()
     // ------------------------------------------------------------------
 
     // Tetrahedron vertices
-
     std::vector<float> vertices;
 
-    drawKT(f1vertex1, f1vertex2, f1vertex3, 0, vertices);
-    drawKT(f2vertex1, f2vertex2, f2vertex3, 0, vertices);
-    drawKT(f3vertex1, f3vertex2, f3vertex3, 0, vertices);
-    drawKT(f4vertex1, f4vertex2, f4vertex3, 0, vertices);
+    //Sierpinski
+    drawST(f1vertex1, f1vertex2, f1vertex3, 0, vertices);
+    drawST(f2vertex1, f2vertex2, f2vertex3, 0, vertices);
+    drawST(f3vertex1, f3vertex2, f3vertex3, 0, vertices);
+    drawST(f4vertex1, f4vertex2, f4vertex3, 0, vertices);
+
+    //Inverse Sierpinski
+    //drawInverseST(f1vertex1, f1vertex2, f1vertex3, 0, vertices);
+    //drawInverseST(f2vertex1, f2vertex2, f2vertex3, 0, vertices);
+    //drawInverseST(f3vertex1, f3vertex2, f3vertex3, 0, vertices);
+    //drawInverseST(f4vertex1, f4vertex2, f4vertex3, 0, vertices);
 
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
