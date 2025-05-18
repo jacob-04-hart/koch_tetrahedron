@@ -77,21 +77,21 @@ std::vector<float> midpoint(std::vector<float> c1,std::vector<float> c2) {
     return midpoint;
 }
 
+bool vectorEquals(const std::vector<float>& v1, const std::vector<float>& v2) {
+    if (v1.size() != v2.size()) return false;
+    for (size_t i = 0; i < v1.size(); ++i) {
+        if (std::abs(v1[i] - v2[i]) > 1e-1) return false;
+    }
+    return true;
+}
+
 const std::vector<float> normal1 = normal(f1vertex1,f1vertex2,f1vertex3);
 const std::vector<float> normal2 = normal(f2vertex1,f2vertex2,f2vertex3);
 const std::vector<float> normal3 = normal(f3vertex1,f3vertex2,f3vertex3);
 const std::vector<float> normal4 = normal(f4vertex1,f4vertex2,f4vertex3);
 
-bool vectorEquals(const std::vector<float>& v1, const std::vector<float>& v2) {
-    if (v1.size() != v2.size()) return false;
-    for (size_t i = 0; i < v1.size(); ++i) {
-        if (std::abs(v1[i] - v2[i]) > 1e-6) return false;
-    }
-    return true;
-}
-
 void drawTriangle(std::vector<float> a, std::vector<float> b, std::vector<float> c, std::vector<float> &vertices){
-    std::vector<float> normalVector = normal(a,b,c);
+    std::vector<float> normalVector = normal(a,c,b);
     if(vectorEquals(normalVector, normal1)){
         vertices.insert(vertices.end(),a.begin(),a.end());
         vertices.insert(vertices.end(),color1.begin(),color1.end());
@@ -127,7 +127,41 @@ void drawKT(std::vector<float> a, std::vector<float> b, std::vector<float> c, in
             std::vector<float> &vertices)
 {
     if (depth < maxDepth){
+        std::vector<float> mid1 = midpoint(c,a);
+        std::vector<float> mid2 = midpoint(a,b);
+        std::vector<float> mid3 = midpoint(b,c);
 
+        std::vector<float> newA1 = mid1;
+        std::vector<float> newB1 = mid2;
+
+        std::vector<float> newA2 = mid2;
+        std::vector<float> newB2 = mid3;
+
+        std::vector<float> newA3 = mid3;
+        std::vector<float> newB3 = mid1;
+
+        std::vector<float> centroid = {
+            (mid1[0] + mid2[0] + mid3[0]) / 3.0f,
+            (mid1[1] + mid2[1] + mid3[1]) / 3.0f,
+            (mid1[2] + mid2[2] + mid3[2]) / 3.0f};
+
+        std::vector<float> normalVec = normal(mid1,mid2,mid3);
+
+        float edgeLength = std::sqrt(
+            (mid1[0] - mid2[0]) * (mid1[0] - mid2[0]) +
+            (mid1[1] - mid2[1]) * (mid1[1] - mid2[1]) +
+            (mid1[2] - mid2[2]) * (mid1[2] - mid2[2]));
+
+        float height = std::sqrt(2.0f / 3.0f) * edgeLength;
+
+        std::vector<float> newC = {
+            centroid[0] + normalVec[0] * height,
+            centroid[1] + normalVec[1] * height,
+            centroid[2] + normalVec[2] * height};
+
+        drawKT(mid1,mid2,newC,depth+1,vertices);
+        drawKT(mid2,mid3,newC,depth+1,vertices);
+        drawKT(mid3,mid1,newC,depth+1,vertices);
     }
     else{
         drawTriangle(a,b,c,vertices);
@@ -183,7 +217,12 @@ int main()
 
     // Tetrahedron vertices
 
-    float vertices[] = {};
+    std::vector<float> vertices;
+
+    drawKT(f1vertex1,f1vertex2,f1vertex3,0,vertices);
+    drawKT(f2vertex1,f2vertex2,f2vertex3,0,vertices);
+    drawKT(f3vertex1,f3vertex2,f3vertex3,0,vertices);
+    drawKT(f4vertex1,f4vertex2,f4vertex3,0,vertices);
 
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
@@ -192,10 +231,10 @@ int main()
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
     // color attribute
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
@@ -239,7 +278,7 @@ int main()
 
         // render container
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 6);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
