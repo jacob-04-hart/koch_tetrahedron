@@ -11,10 +11,73 @@
 #include <cmath>
 #include <vector>
 
-const std::vector<float> color1 = {1.0f,0.0f,0.0f}; //red
-const std::vector<float> color2 = {0.0f,1.0f,0.0f}; //green
-const std::vector<float> color3 = {0.0f,0.0f,1.0f}; //blue
-const std::vector<float> color4 = {1.0f,1.0f,0.0f}; //yellow
+const std::vector<float> color1 = {1.0f, 0.0f, 0.0f}; // red
+const std::vector<float> color2 = {0.0f, 1.0f, 0.0f}; // green
+const std::vector<float> color3 = {0.0f, 0.0f, 1.0f}; // blue
+const std::vector<float> color4 = {1.0f, 1.0f, 0.0f}; // yellow
+
+const unsigned int maxDepth = 3;
+
+// Face 1
+std::vector<float> f1vertex1 = {.5f,.5f,.5f};
+
+std::vector<float> f1vertex2 = {-.5f,-.5f,.5f};
+
+std::vector<float> f1vertex3 = {.5f,-.5f,-.5f};
+
+// Face 2
+std::vector<float> f2vertex1 = {.5f,.5f,.5f};
+
+std::vector<float> f2vertex2 = {.5f,-.5f,-.5f};
+
+std::vector<float> f2vertex3 = {-.5f,.5f,-.5f};
+
+// Face 3
+std::vector<float> f3vertex1 = {.5f,.5f,.5f};
+
+std::vector<float> f3vertex2 = {-.5f,.5f,-.5f};
+
+std::vector<float> f3vertex3 = {-.5f,-.5f,.5f};
+
+// Face 4
+std::vector<float> f4vertex1 = {-.5f,-.5f,.5f};
+
+std::vector<float> f4vertex2 = {-.5f,.5f,-.5f};
+
+std::vector<float> f4vertex3 = {.5f,-.5f,-.5f};
+
+std::vector<float> crossProduct(const std::vector<float>& a, const std::vector<float>& b) {
+    return {
+        a[1]*b[2] - a[2]*b[1],
+        a[2]*b[0] - a[0]*b[2],
+        a[0]*b[1] - a[1]*b[0]
+    };
+}
+
+std::vector<float> pointsVector(const std::vector<float>& a, const std::vector<float>& b) {
+    std::vector<float> ab(a.size());
+    for (size_t i = 0; i < a.size(); ++i) {
+        ab[i] = b[i] - a[i];
+    }
+    return ab;
+} 
+
+std::vector<float> normalize(const std::vector<float>& v) {
+    float length = std::sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+    if (length == 0.0f) return {0.0f, 0.0f, 0.0f};
+    return { v[0]/length, v[1]/length, v[2]/length };
+}
+
+std::vector<float> normal(const std::vector<float>& a, const std::vector<float>& b,const std::vector<float>& c) {
+    std::vector<float> ab = pointsVector(a,b);
+    std::vector<float> ac = pointsVector(a,c);
+    return normalize(crossProduct(ab,ac));
+}
+
+std::vector<float> normal1 = normal(f1vertex1,f1vertex2,f1vertex3);
+std::vector<float> normal2 = normal(f2vertex1,f2vertex2,f2vertex3);
+std::vector<float> normal3 = normal(f3vertex1,f3vertex2,f3vertex3);
+std::vector<float> normal4 = normal(f4vertex1,f4vertex2,f4vertex3);
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -23,10 +86,16 @@ void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-void drawKT(std::vector<float> c1, std::vector<float> c2, std::vector<float> c3, int depth, 
-            std::vector<float>& vertices) {
-
-            };
+void drawKT(std::vector<float> a, std::vector<float> b, std::vector<float> c, int depth,
+            std::vector<float> &vertices)
+{
+    if (depth < maxDepth)
+    {
+    }
+    else
+    {
+    }
+};
 
 int main()
 {
@@ -70,34 +139,6 @@ int main()
 
     // Tetrahedron vertices
 
-    // Face 1
-    std::vector<float> f1vertex1 = {};
-
-    std::vector<float> f1vertex2 = {};
-
-    std::vector<float> f1vertex3 = {};
-
-    // Face 2
-    std::vector<float> f2vertex1 = {};
-
-    std::vector<float> f2vertex2 = {};
-
-    std::vector<float> f2vertex3 = {};
-
-    // Face 3
-    std::vector<float> f3vertex1 = {};
-
-    std::vector<float> f3vertex2 = {};
-
-    std::vector<float> f3vertex3 = {};
-
-    // Face 4
-    std::vector<float> f4vertex1 = {};
-
-    std::vector<float> f4vertex2 = {};
-
-    std::vector<float> f4vertex3 = {};
-
     float vertices[] = {};
 
     unsigned int VBO, VAO;
@@ -113,11 +154,10 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
     // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3* sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-
-    glEnable(GL_DEPTH_TEST); 
+    glEnable(GL_DEPTH_TEST);
 
     // render loop
     // -----------
