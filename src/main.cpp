@@ -66,6 +66,17 @@ std::vector<float> normal(const std::vector<float>& a, const std::vector<float>&
     return normalize(crossProduct(ab,ac));
 }
 
+std::vector<float> midpoint(std::vector<float> c1,std::vector<float> c2) {
+    float x = (c1[0]+c2[0])/2;
+    float y = (c1[1]+c2[1])/2;
+    float z = (c1[2]+c2[2])/2;
+    std::vector<float> midpoint;
+    midpoint.insert(midpoint.end(),x);
+    midpoint.insert(midpoint.end(),y);
+    midpoint.insert(midpoint.end(),z);
+    return midpoint;
+}
+
 const std::vector<float> normal1 = normal(f1vertex1,f1vertex2,f1vertex3);
 const std::vector<float> normal2 = normal(f2vertex1,f2vertex2,f2vertex3);
 const std::vector<float> normal3 = normal(f3vertex1,f3vertex2,f3vertex3);
