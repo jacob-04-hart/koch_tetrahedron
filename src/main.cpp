@@ -19,32 +19,24 @@ const std::vector<float> color4 = {1.0f, 1.0f, 0.0f}; // yellow
 const unsigned int maxDepth = 3;
 
 // Face 1
-std::vector<float> f1vertex1 = {.5f,.5f,.5f};
-
-std::vector<float> f1vertex2 = {-.5f,-.5f,.5f};
-
-std::vector<float> f1vertex3 = {.5f,-.5f,-.5f};
+const std::vector<float> f1vertex1 = {.5f, .5f, .5f};
+const std::vector<float> f1vertex2 = {-.5f, -.5f, .5f};
+const std::vector<float> f1vertex3 = {.5f, -.5f, -.5f};
 
 // Face 2
-std::vector<float> f2vertex1 = {.5f,.5f,.5f};
-
-std::vector<float> f2vertex2 = {.5f,-.5f,-.5f};
-
-std::vector<float> f2vertex3 = {-.5f,.5f,-.5f};
+const std::vector<float> f2vertex1 = {.5f, .5f, .5f};
+const std::vector<float> f2vertex2 = {.5f, -.5f, -.5f};
+const std::vector<float> f2vertex3 = {-.5f, .5f, -.5f};
 
 // Face 3
-std::vector<float> f3vertex1 = {.5f,.5f,.5f};
-
-std::vector<float> f3vertex2 = {-.5f,.5f,-.5f};
-
-std::vector<float> f3vertex3 = {-.5f,-.5f,.5f};
+const std::vector<float> f3vertex1 = {.5f, .5f, .5f};
+const std::vector<float> f3vertex2 = {-.5f, .5f, -.5f};
+const std::vector<float> f3vertex3 = {-.5f, -.5f, .5f};
 
 // Face 4
-std::vector<float> f4vertex1 = {-.5f,-.5f,.5f};
-
-std::vector<float> f4vertex2 = {-.5f,.5f,-.5f};
-
-std::vector<float> f4vertex3 = {.5f,-.5f,-.5f};
+const std::vector<float> f4vertex1 = {-.5f, -.5f, .5f};
+const std::vector<float> f4vertex2 = {-.5f, .5f, -.5f};
+const std::vector<float> f4vertex3 = {.5f, -.5f, -.5f};
 
 std::vector<float> crossProduct(const std::vector<float>& a, const std::vector<float>& b) {
     return {
@@ -74,10 +66,62 @@ std::vector<float> normal(const std::vector<float>& a, const std::vector<float>&
     return normalize(crossProduct(ab,ac));
 }
 
-std::vector<float> normal1 = normal(f1vertex1,f1vertex2,f1vertex3);
-std::vector<float> normal2 = normal(f2vertex1,f2vertex2,f2vertex3);
-std::vector<float> normal3 = normal(f3vertex1,f3vertex2,f3vertex3);
-std::vector<float> normal4 = normal(f4vertex1,f4vertex2,f4vertex3);
+const std::vector<float> normal1 = normal(f1vertex1,f1vertex2,f1vertex3);
+const std::vector<float> normal2 = normal(f2vertex1,f2vertex2,f2vertex3);
+const std::vector<float> normal3 = normal(f3vertex1,f3vertex2,f3vertex3);
+const std::vector<float> normal4 = normal(f4vertex1,f4vertex2,f4vertex3);
+
+bool vectorEquals(const std::vector<float>& v1, const std::vector<float>& v2) {
+    if (v1.size() != v2.size()) return false;
+    for (size_t i = 0; i < v1.size(); ++i) {
+        if (std::abs(v1[i] - v2[i]) > 1e-6) return false;
+    }
+    return true;
+}
+
+void drawTriangle(std::vector<float> a, std::vector<float> b, std::vector<float> c, std::vector<float> &vertices){
+    std::vector<float> normalVector = normal(a,b,c);
+    if(vectorEquals(normalVector, normal1)){
+        vertices.insert(vertices.end(),a.begin(),a.end());
+        vertices.insert(vertices.end(),color1.begin(),color1.end());
+        vertices.insert(vertices.end(),b.begin(),b.end());
+        vertices.insert(vertices.end(),color1.begin(),color1.end());
+        vertices.insert(vertices.end(),c.begin(),c.end());
+        vertices.insert(vertices.end(),color1.begin(),color1.end());
+    } else if(vectorEquals(normalVector, normal2)){
+        vertices.insert(vertices.end(),a.begin(),a.end());
+        vertices.insert(vertices.end(),color2.begin(),color2.end());
+        vertices.insert(vertices.end(),b.begin(),b.end());
+        vertices.insert(vertices.end(),color2.begin(),color2.end());
+        vertices.insert(vertices.end(),c.begin(),c.end());
+        vertices.insert(vertices.end(),color2.begin(),color2.end());
+    } else if(vectorEquals(normalVector, normal3)){
+        vertices.insert(vertices.end(),a.begin(),a.end());
+        vertices.insert(vertices.end(),color3.begin(),color3.end());
+        vertices.insert(vertices.end(),b.begin(),b.end());
+        vertices.insert(vertices.end(),color3.begin(),color3.end());
+        vertices.insert(vertices.end(),c.begin(),c.end());
+        vertices.insert(vertices.end(),color3.begin(),color3.end());
+    } else if(vectorEquals(normalVector, normal4)){
+        vertices.insert(vertices.end(),a.begin(),a.end());
+        vertices.insert(vertices.end(),color4.begin(),color4.end());
+        vertices.insert(vertices.end(),b.begin(),b.end());
+        vertices.insert(vertices.end(),color4.begin(),color4.end());
+        vertices.insert(vertices.end(),c.begin(),c.end());
+        vertices.insert(vertices.end(),color4.begin(),color4.end());
+    }
+};
+
+void drawKT(std::vector<float> a, std::vector<float> b, std::vector<float> c, int depth,
+            std::vector<float> &vertices)
+{
+    if (depth < maxDepth){
+
+    }
+    else{
+        drawTriangle(a,b,c,vertices);
+    }
+};
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -85,17 +129,6 @@ void processInput(GLFWwindow *window);
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-
-void drawKT(std::vector<float> a, std::vector<float> b, std::vector<float> c, int depth,
-            std::vector<float> &vertices)
-{
-    if (depth < maxDepth)
-    {
-    }
-    else
-    {
-    }
-};
 
 int main()
 {
