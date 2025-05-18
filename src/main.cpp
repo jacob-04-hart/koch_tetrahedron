@@ -16,7 +16,7 @@ const std::vector<float> color2 = {0.0f, 1.0f, 0.0f}; // green
 const std::vector<float> color3 = {0.0f, 0.0f, 1.0f}; // blue
 const std::vector<float> color4 = {1.0f, 1.0f, 0.0f}; // yellow
 
-const unsigned int maxDepth = 6;
+const unsigned int maxDepth = 6; // change this to either save or set fire to your computer
 
 // Face 1
 const std::vector<float> f1vertex1 = {.5f, .5f, .5f};
@@ -98,7 +98,6 @@ bool vectorEquals(const std::vector<float> &v1, const std::vector<float> &v2)
 bool normalsEqual(const std::vector<float> &n1, const std::vector<float> &n2, float epsilon = 1e-1)
 {
     float dot = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2];
-    // For normalized vectors, dot == 1 means same direction, -1 means opposite
     return std::abs(std::abs(dot) - 1.0f) < epsilon;
 }
 
@@ -111,11 +110,9 @@ void drawTriangle(std::vector<float> a, std::vector<float> b, std::vector<float>
 {
     std::vector<float> n = normal(a, b, c);
 
-    // List of face normals and colors
     const std::vector<std::vector<float>> faceNormals = {normal1, normal2, normal3, normal4};
     const std::vector<std::vector<float>> faceColors = {color1, color2, color3, color4};
 
-    // Find the face normal with the largest absolute dot product
     float maxDot = -1.0f;
     int bestFace = 0;
     for (int i = 0; i < 4; ++i)
@@ -128,7 +125,6 @@ void drawTriangle(std::vector<float> a, std::vector<float> b, std::vector<float>
         }
     }
 
-    // Use the color of the closest face
     const std::vector<float> &color = faceColors[bestFace];
     vertices.insert(vertices.end(), a.begin(), a.end());
     vertices.insert(vertices.end(), color.begin(), color.end());
@@ -170,27 +166,15 @@ void drawKT(std::vector<float> a, std::vector<float> b, std::vector<float> c, in
             (mid1[1] + mid2[1] + mid3[1]) / 3.0f,
             (mid1[2] + mid2[2] + mid3[2]) / 3.0f};
 
-        // Generate both possible apexes
         std::vector<float> newC1 = {
             centroid[0] + baseNormal[0] * height,
             centroid[1] + baseNormal[1] * height,
             centroid[2] + baseNormal[2] * height};
-        std::vector<float> newC2 = {
-            centroid[0] - baseNormal[0] * height,
-            centroid[1] - baseNormal[1] * height,
-            centroid[2] - baseNormal[2] * height};
         
-        //if ((depth == 0)||(depth=1)||(depth=2)||(depth==3)||(depth==4)||(depth==5)||(depth==6)||(depth==7)){
-        if(0==0) {
-            drawKT(mid1, mid2, newC1, depth + 1, vertices);
-            drawKT(mid2, mid3, newC1, depth + 1, vertices);
-            drawKT(mid3, mid1, newC1, depth + 1, vertices);
-        }
-        /*else {
-            drawKT(mid1, mid2, newC2, depth + 1, vertices);
-            drawKT(mid2, mid3, newC2, depth + 1, vertices);
-            drawKT(mid3, mid1, newC2, depth + 1, vertices);
-        }*/
+        drawKT(mid1, mid2, newC1, depth + 1, vertices);
+        drawKT(mid2, mid3, newC1, depth + 1, vertices);
+        drawKT(mid3, mid1, newC1, depth + 1, vertices);
+
         if (depth < (maxDepth - 1))
         {
             drawKT(a, mid2, mid1, depth + 1, vertices);
@@ -220,8 +204,6 @@ const unsigned int SCR_HEIGHT = 600;
 
 int main()
 {
-    // glfw: initialize and configure
-    // ------------------------------
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -231,8 +213,6 @@ int main()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    // glfw window creation
-    // --------------------
     GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
     if (window == NULL)
     {
@@ -243,20 +223,13 @@ int main()
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    // glad: load all OpenGL function pointers
-    // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
 
-    // build and compile our shader program
-    // ------------------------------------
-    Shader ourShader("src/shader.vs", "src/shader.fs"); // you can name your shader files however you like
-
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    // ------------------------------------------------------------------
+    Shader ourShader("src/shader.vs", "src/shader.fs");
 
     // Tetrahedron vertices
 
@@ -285,74 +258,55 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
-    // render loop
-    // -----------
+
     while (!glfwWindowShouldClose(window))
     {
-        // input
-        // -----
         processInput(window);
 
-        // render
-        // ------
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // activate shader
         ourShader.use();
 
-        // create transformations
-        glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+        glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = glm::mat4(1.0f);
         glm::mat4 projection = glm::mat4(1.0f);
         model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
         view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
         projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        // retrieve the matrix uniform locations
+
         unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "model");
         unsigned int viewLoc = glGetUniformLocation(ourShader.ID, "view");
-        // pass them to the shaders (3 different ways)
+
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-        // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+
         ourShader.setMat4("projection", projection);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // render container
+
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 6);
 
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // optional: de-allocate all resources once they've outlived their purpose:
-    // ------------------------------------------------------------------------
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
 
-    // glfw: terminate, clearing all previously allocated GLFW resources.
-    // ------------------------------------------------------------------
     glfwTerminate();
     return 0;
 }
 
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
 
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
-    // make sure the viewport matches the new window dimensions; note that width and
-    // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
