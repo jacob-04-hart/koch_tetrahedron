@@ -16,7 +16,7 @@ const std::vector<float> color2 = {0.0f, 1.0f, 0.0f}; // green
 const std::vector<float> color3 = {0.0f, 0.0f, 1.0f}; // blue
 const std::vector<float> color4 = {1.0f, 1.0f, 0.0f}; // yellow
 
-const unsigned int maxDepth = 7;
+const unsigned int maxDepth = 6;
 
 // Face 1
 const std::vector<float> f1vertex1 = {.5f, .5f, .5f};
@@ -180,17 +180,11 @@ void drawKT(std::vector<float> a, std::vector<float> b, std::vector<float> c, in
             centroid[1] - baseNormal[1] * height,
             centroid[2] - baseNormal[2] * height};
         
-        //if ((depth == 0)||(depth=1)||(depth=2)||(depth==3)||(depth==4)||(depth==5)||(depth==6)||(depth==7)){
-        if(depth%3!=0) {
-            drawKT(mid1, mid2, newC1, depth + 1, vertices);
-            drawKT(mid2, mid3, newC1, depth + 1, vertices);
-            drawKT(mid3, mid1, newC1, depth + 1, vertices);
-        } 
-        /*else {
-            drawKT(mid1, mid2, newC2, depth + 1, vertices);
-            drawKT(mid2, mid3, newC2, depth + 1, vertices);
-            drawKT(mid3, mid1, newC2, depth + 1, vertices);
-        }*/
+
+        drawKT(mid1, mid2, newC1, 20, vertices);
+        drawKT(mid2, mid3, newC1, 20, vertices);
+        drawKT(mid3, mid1, newC1, 20, vertices);
+
         if (depth < (maxDepth - 1))
         {
             drawKT(mid2, mid1, a, depth + 1, vertices);
