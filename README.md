@@ -2,7 +2,7 @@
 ## Made with <3 and GLFW
 
 Two Sierpinski's Tetrahedron variants rendered in OpenGL.
-Check out the other experimental branches!!!!
+I made this one into it's own repo, go check it out!!!!
 
 ## About
 
