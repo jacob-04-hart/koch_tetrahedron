@@ -17,7 +17,7 @@ const std::vector<float> color2 = {0.0f, 1.0f, 0.0f}; // green
 const std::vector<float> color3 = {0.0f, 0.0f, 1.0f}; // blue
 const std::vector<float> color4 = {1.0f, 1.0f, 0.0f}; // yellow
 
-const unsigned int maxDepth = 5;
+const unsigned int maxDepth = 3;
 
 // Face 1
 const std::vector<float> f1vertex1 = {.5f, .5f, .5f};
@@ -283,16 +283,16 @@ int main()
     std::vector<float> vertices;
 
     //Sierpinski
-    drawST(f1vertex1, f1vertex2, f1vertex3, 0, vertices);
-    drawST(f2vertex1, f2vertex2, f2vertex3, 0, vertices);
-    drawST(f3vertex1, f3vertex2, f3vertex3, 0, vertices);
-    drawST(f4vertex1, f4vertex2, f4vertex3, 0, vertices);
+    //drawST(f1vertex1, f1vertex2, f1vertex3, 0, vertices);
+    //drawST(f2vertex1, f2vertex2, f2vertex3, 0, vertices);
+    //drawST(f3vertex1, f3vertex2, f3vertex3, 0, vertices);
+    //drawST(f4vertex1, f4vertex2, f4vertex3, 0, vertices);
 
     //Inverse Sierpinski
-    //drawInverseST(f1vertex1, f1vertex2, f1vertex3, 0, vertices);
-    //drawInverseST(f2vertex1, f2vertex2, f2vertex3, 0, vertices);
-    //drawInverseST(f3vertex1, f3vertex2, f3vertex3, 0, vertices);
-    //drawInverseST(f4vertex1, f4vertex2, f4vertex3, 0, vertices);
+    drawInverseST(f1vertex1, f1vertex2, f1vertex3, 0, vertices);
+    drawInverseST(f2vertex1, f2vertex2, f2vertex3, 0, vertices);
+    drawInverseST(f3vertex1, f3vertex2, f3vertex3, 0, vertices);
+    drawInverseST(f4vertex1, f4vertex2, f4vertex3, 0, vertices);
 
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
@@ -332,7 +332,7 @@ int main()
         glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
         glm::mat4 view = glm::mat4(1.0f);
         glm::mat4 projection = glm::mat4(1.0f);
-        model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+        model = glm::rotate(model, (float)glfwGetTime() * glm::radians(30.0f), glm::vec3(0.5f, 1.0f, 0.0f));
         view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
         projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         // retrieve the matrix uniform locations
