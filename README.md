@@ -22,7 +22,7 @@ There is no GUI (yet...) so you have to go to line 280 of main.cpp and comment o
 ## How to Run
 
 1. Build the project (see your build instructions or Makefile).
-2. Run the executable:
+2. Run the executable (you may have it called something else):
    ```sh
    ./koch_tetrahedron
    ```
