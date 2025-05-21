@@ -6,17 +6,46 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "shader_s.h"
+#include "camera.h"
 
 #include <iostream>
 #include <cmath>
 #include <vector>
+
+// settings
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
+
+// camera
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+float lastX = SCR_WIDTH / 2.0f;
+float lastY = SCR_HEIGHT / 2.0f;
+bool firstMouse = true;
+
+bool isFirstDown = true;
+bool justStartedDragging = false;
+
+float orgX;
+float orgY;
+
+float rotX;
+float rotY;
+
+float preRotX;
+float preRotY;
+
+float totalRotX, totalRotY;
+
+// timing
+float deltaTime = 0.0f;	// time between current frame and last frame
+float lastFrame = 0.0f;
 
 const std::vector<float> color1 = {1.0f, 0.0f, 0.0f}; // red
 const std::vector<float> color2 = {0.0f, 1.0f, 0.0f}; // green
 const std::vector<float> color3 = {0.0f, 0.0f, 1.0f}; // blue
 const std::vector<float> color4 = {1.0f, 1.0f, 0.0f}; // yellow
 
-const unsigned int maxDepth = 5; // change this to either save or set fire to your computer
+const unsigned int maxDepth = 3; // change this to either save or set fire to your computer
 
 // Face 1
 const std::vector<float> f1vertex1 = {.5f, .5f, .5f};
@@ -195,12 +224,11 @@ void drawKT(std::vector<float> a, std::vector<float> b, std::vector<float> c, in
     }
 };
 
-void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
-
-// settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
 
 int main()
 {
@@ -222,6 +250,12 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback); 
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    
+    glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -261,13 +295,17 @@ int main()
 
     while (!glfwWindowShouldClose(window))
     {
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        
         processInput(window);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         ourShader.use();
-
+        /*
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = glm::mat4(1.0f);
         glm::mat4 projection = glm::mat4(1.0f);
@@ -282,9 +320,28 @@ int main()
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
 
         ourShader.setMat4("projection", projection);
+        */
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // pass projection matrix to shader (note that in this case it could change every frame)
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        ourShader.setMat4("projection", projection);
 
+        // camera/view transformation
+        glm::mat4 view = camera.GetViewMatrix();
+        ourShader.setMat4("view", view);
+
+        glm::mat4 model = glm::mat4(1.0f);
+        if(isFirstDown){ //mouse is released, rotate model by preRotX and preRotY
+            totalRotX = preRotX;
+            totalRotY = preRotY;
+        }else{ //mouse is pressed, rotate model by preRotX and preRotY minus rotX and rotY
+            totalRotX = preRotX + rotX;
+            totalRotY = preRotY + rotY;
+        }
+        // Apply Y rotation first (vertical axis), then X (horizontal axis)
+        model = glm::rotate(model, glm::radians(totalRotY), glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(totalRotX), glm::vec3(0.0f, 1.0f, 0.0f));
+        ourShader.setMat4("model", model);
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 6);
@@ -300,10 +357,82 @@ int main()
     return 0;
 }
 
+void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+            isFirstDown = false;
+            double xpos, ypos;
+            glfwGetCursorPos(window, &xpos, &ypos);
+            orgX = xpos;
+            orgY = ypos;
+            rotX = 0;
+            rotY = 0;
+            justStartedDragging = true;
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        } else if (action == GLFW_RELEASE) {
+            isFirstDown = true;
+            preRotX += rotX;
+            preRotY += rotY;
+            rotX = 0;
+            rotY = 0;
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
+    }
+}
+
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+{
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos;
+
+    lastX = xpos;
+    lastY = ypos;
+    if(isFirstDown){
+        camera.ProcessMouseMovement(xoffset, yoffset);
+    } else {
+        if (justStartedDragging) {
+            orgX = xpos;
+            orgY = ypos;
+            rotX = 0;
+            rotY = 0;
+            justStartedDragging = false;
+        } else {
+            rotX = xpos - orgX;
+            rotY = ypos - orgY;
+        }
+    }
+}  
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    camera.ProcessMouseScroll(static_cast<float>(yoffset));
+}
+
+// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
+// ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
